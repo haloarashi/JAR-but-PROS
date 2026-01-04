@@ -238,3 +238,16 @@ float clamp_min_voltage(float drive_output, float drive_min_voltage){
   }
   return drive_output;
 }
+
+void simple_screen_task() {
+	// chassis.set_coordinates(29.804, 66.47, 180);
+	while (true) {
+		pros::screen::erase();
+		pros::screen::print(TEXT_MEDIUM, 1, "X: %.2f,  Y: %.2f, Heading: %.2f", chassis.get_X_position(), chassis.get_Y_position(), chassis.get_absolute_heading());
+		pros::screen::print(TEXT_MEDIUM, 4, "DT temp: %.2f, %.2f", chassis.DriveL.get_temperature(), chassis.DriveR.get_temperature());
+		pros::screen::print(TEXT_MEDIUM, 5, "Distance L (mm): %d", distance_sensorL.get());
+		pros::screen::print(TEXT_MEDIUM, 6, "Distance R (mm): %d", distance_sensorR.get());
+    
+		delay(20);
+	}
+}
