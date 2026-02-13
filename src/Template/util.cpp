@@ -121,8 +121,8 @@ bool is_reversed(double input){
 
 /**
  * Scales a joystick to drive voltage scale.
- * Values get multiplied by 12 because motors can
- * output a max of 12 volts.
+ * Values get multiplied by 1.27 because motors can
+ * output a max of 127 volts.
  * 
  * @param percent The input joystick reading.
  * @return The equivalent value in volts.
@@ -193,7 +193,7 @@ bool is_line_settled(float desired_X, float desired_Y, float desired_angle_deg, 
  */
 
 float left_voltage_scaling(float drive_output, float heading_output){
-  float ratio = std::max(std::fabs(drive_output+heading_output), std::fabs(drive_output-heading_output))/12.0;
+  float ratio = std::max(std::fabs(drive_output+heading_output), std::fabs(drive_output-heading_output))/127.0;
   if (ratio > 1) {
     return (drive_output+heading_output)/ratio;
   }
@@ -211,7 +211,7 @@ float left_voltage_scaling(float drive_output, float heading_output){
  */
 
 float right_voltage_scaling(float drive_output, float heading_output){
-  float ratio = std::max(std::fabs(drive_output+heading_output), std::fabs(drive_output-heading_output))/12.0;
+  float ratio = std::max(std::fabs(drive_output+heading_output), std::fabs(drive_output-heading_output))/127.0;
   if (ratio > 1) {
     return (drive_output-heading_output)/ratio;
   }
@@ -239,15 +239,137 @@ float clamp_min_voltage(float drive_output, float drive_min_voltage){
   return drive_output;
 }
 
-void simple_screen_task() {
+uint32_t hsv_to_rgb(float h, float s, float v, float time) {
+    int i = int(h / 60) % 6;
+    float f = h / 60 - i;
+    float p = v * (1 - s);
+    float q = v * (1 - f * s);
+    float t = v * (1 - (1 - f) * s);
+
+    float r, g, b;
+    switch (i) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        default:r = v; g = p; b = q; break;
+    }
+    
+    // time = time / 100000; // scale speed
+    // r = uint8_t((sin(time) * 0.5f + 0.5f) * 255);
+    // g = uint8_t((sin(time + 2) * 0.5f + 0.5f) * 255);
+    // b = uint8_t((sin(time + 4) * 0.5f + 0.5f) * 255);
+
+    return (uint32_t(r * 255) << 16) | (uint32_t(g * 255) << 8) | uint32_t(b * 255);
+}
+
+uint32_t rgb_to_uint32(int r, int g, int b) {
+    return (uint32_t(r) << 16) | (uint32_t(g) << 8) | uint32_t(b);
+}
+
+int overheat = 0;
+int screen_time = 0;
+void simple_screen_task(){
 	// chassis.set_coordinates(29.804, 66.47, 180);
-	while (true) {
+	while (true){
 		pros::screen::erase();
+    int overheat_threshold = 40;
+    overheat = 0;
+
+    if(chassis.DriveL.get_temperature(0) > overheat_threshold || chassis.DriveL.get_temperature(1) > overheat_threshold || chassis.DriveL.get_temperature(2) > overheat_threshold){
+      pros::screen::print(TEXT_LARGE_CENTER, 10, "DRIVE_L OVERHEATING");
+      overheat = 1;
+    }
+    if(chassis.DriveR.get_temperature(0) > overheat_threshold || chassis.DriveR.get_temperature(1) > overheat_threshold || chassis.DriveR.get_temperature(2) > overheat_threshold){
+      pros::screen::print(TEXT_LARGE_CENTER, 10, "DRIVE_R OVERHEATING");
+      overheat = 1;
+	  }
+    // if(intake_down.get_temperature() > overheat_threshold){
+    //   pros::screen::print(TEXT_LARGE_CENTER, 10, "INTAKE_DOWN OVERHEATING");
+    //   overheat = 2;
+    // }
+    // if(intake_mid.get_temperature() > overheat_threshold){
+    //   pros::screen::print(TEXT_LARGE_CENTER, 10, "INTAKE_MID OVERHEATING");
+    //   overheat = 3;
+    // }
+    // if(intake_up.get_temperature() > overheat_threshold){
+    //   pros::screen::print(TEXT_LARGE_CENTER, 10, "INTAKE_UP OVERHEATING");
+    //   overheat = 3;
+    // }
+    
+    uint32_t flash_color;
+
+    switch(overheat){
+      case 1:
+        flash_color = pros::c::COLOR_RED;
+        break;
+
+      case 2:
+        flash_color = pros::c::COLOR_ORANGE;
+        break;
+      
+      case 3:
+        flash_color = pros::c::COLOR_GREEN;
+        break;
+      
+      default:
+        // pros::screen::set_pen(uint32_t((screen_time * 10) % 16777215));
+        // pros::screen::set_eraser(uint32_t((screen_time * 10) % 16777215));
+        float hue = fmod(screen_time  * 0.06, 360);
+        // pros::screen::set_eraser(hsv_to_rgb(hue, 1, 1, screen_time));
+        pros::screen::set_pen(pros::c::COLOR_BLACK);
+        pros::screen::set_eraser(pros::c::COLOR_BLACK);
+        pros::screen::fill_rect(1,1,480,240);
+        pros::screen::set_pen(hsv_to_rgb(hue, 1, 1, screen_time));
+        break;
+    }
+
+    if(overheat != 0) {
+      if(screen_time % 250 < 125){
+        pros::screen::set_pen(pros::c::COLOR_BLACK);
+        pros::screen::set_eraser(pros::c::COLOR_BLACK);
+        pros::screen::fill_rect(1,1,480,240);
+      }
+      else{
+        pros::screen::set_pen(flash_color);
+        pros::screen::set_eraser(flash_color);
+        pros::screen::fill_rect(1,1,480,240);
+      }
+      pros::screen::set_pen(pros::c::COLOR_WHITE);
+    }
+
 		pros::screen::print(TEXT_MEDIUM, 1, "X: %.2f,  Y: %.2f, Heading: %.2f", chassis.get_X_position(), chassis.get_Y_position(), chassis.get_absolute_heading());
-		pros::screen::print(TEXT_MEDIUM, 4, "DT temp: %.2f, %.2f", chassis.DriveL.get_temperature(), chassis.DriveR.get_temperature());
+		// pros::screen::print(TEXT_MEDIUM, 2, "Intake temp: down %.2f, mid %.2f, up %.2f", intake_down.get_temperature(), intake_mid.get_temperature(), intake_up.get_temperature());
+		pros::screen::print(TEXT_MEDIUM, 3, "DT L temp: %.2f, %.2f, %.2f", chassis.DriveL.get_temperature(0), chassis.DriveL.get_temperature(1), chassis.DriveL.get_temperature(2));
+		pros::screen::print(TEXT_MEDIUM, 4, "DT R temp: %.2f, %.2f, %.2f", chassis.DriveR.get_temperature(0), chassis.DriveR.get_temperature(1), chassis.DriveR.get_temperature(2));
 		pros::screen::print(TEXT_MEDIUM, 5, "Distance L (mm): %d", distance_sensorL.get());
 		pros::screen::print(TEXT_MEDIUM, 6, "Distance R (mm): %d", distance_sensorR.get());
-    
-		delay(20);
-	}
+    pros::screen::print(TEXT_MEDIUM, 7, "Gyro pitch: %.2f", chassis.Gyro.get_pitch());
+    pros::screen::print(TEXT_MEDIUM, 8, "Distance Up (mm): %d", distance_sensorUp.get());
+    // pros::screen::print(TEXT_MEDIUM, 9, "Mid jam time: %d", mid_jam_time);
+    // pros::screen::print(TEXT_MEDIUM, 10, "Unjam attempt time: %d Rest time: %d", unjam_attempt_time, rest_time);
+    // pros::screen::print(TEXT_LARGE_CENTER, 9, "Progress: %d", progress);
+
+    delay(20);
+    screen_time += 20;
+  }
+}
+
+double mm_to_inch(double mm){
+  return(mm/25.4);
+}
+
+void wait_until(std::function<bool()> condition, int check_interval_ms, int timeout_ms) {
+  while (!condition() && (timeout_ms > 0)) {
+    delay(check_interval_ms);
+    if (timeout_ms > 0) timeout_ms -= check_interval_ms;
+  }
+}
+
+void wait_until_bool(bool condition, int check_interval_ms, int timeout_ms){ // if timeout_ms is 0 or below, wait indefinitely
+  while (!condition && (timeout_ms > 0)) {
+    delay(check_interval_ms);
+    timeout_ms -= check_interval_ms;
+  }
 }

@@ -34,3 +34,8 @@ float right_voltage_scaling(float drive_output, float heading_output);
 float clamp_min_voltage(float drive_output, float drive_min_voltage);
 
 void simple_screen_task();
+
+double mm_to_inch(double mm);
+
+void wait_until(std::function<bool()> condition, int check_interval_ms, int timeout_ms);
+void wait_until_bool(bool condition, int check_interval_ms, int timeout_ms);

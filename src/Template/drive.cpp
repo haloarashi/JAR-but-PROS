@@ -17,12 +17,12 @@ Drive::Drive(MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial,
     Fwd_tracker(fwd_tracker), 
     ForwardTracker_diameter(fwd_tracker_diameter), 
     ForwardTracker_center_distance(fwd_tracker_dist), 
-    ForwardTracker_in_to_deg_ratio(M_PI*fwd_tracker_diameter/360.0),
+    ForwardTracker_in_to_deg_ratio(M_PI*fwd_tracker_diameter/36000.0), // 36000 because using PROS API motor.get_position() returns centidegrees
 
     Sideways_tracker(sideways_tracker), 
     SidewaysTracker_diameter(sideways_tracker_diameter), 
     SidewaysTracker_center_distance(sideways_tracker_dist), 
-    SidewaysTracker_in_to_deg_ratio(M_PI*sideways_tracker_diameter/360.0),
+    SidewaysTracker_in_to_deg_ratio(M_PI*sideways_tracker_diameter/36000.0), // 36000 because using PROS API motor.get_position() returns centidegrees
 
     master(CONTROLLER_MASTER)
 {
@@ -118,6 +118,24 @@ void Drive::set_swing_constants(float swing_max_voltage, float swing_kp, float s
 } 
 
 /**
+ * Resets default turn constants.
+ * Turning includes turn_to_angle() and turn_to_point().
+ * 
+ * @param wall_max_voltage Max voltage out of 127.
+ * @param wall_kp Proportional constant.
+ * @param wall_ki Integral constant.
+ * @param wall_kd Derivative constant.
+ * @param wall_starti Minimum distance in inches for integral to begin.
+ */
+void Drive::set_wall_constants(float wall_max_voltage, float wall_kp, float wall_ki, float wall_kd, float wall_starti){
+  this->wall_max_voltage = wall_max_voltage;
+  this->wall_kp = wall_kp;
+  this->wall_ki = wall_ki;
+  this->wall_kd = wall_kd;
+  this->wall_starti = wall_starti;
+} 
+
+/**
  * Resets default turn exit conditions.
  * The robot exits when error is less than settle_error for a duration of settle_time, 
  * or if the function has gone on for longer than timeout.
@@ -199,14 +217,14 @@ float Drive::get_right_position_in(){
 void Drive::drive_stop(MotorBrake mode){
   MotorBrake old_mode = DriveL.get_brake_mode();
 
-    DriveL.set_brake_mode(mode);
-    DriveR.set_brake_mode(mode);
-
+    DriveL.set_brake_mode_all(mode);
+    DriveR.set_brake_mode_all(mode);
+    // chassis.drive_with_voltage(0, 0);
     DriveL.brake();
     DriveR.brake();
 
-    DriveL.set_brake_mode(old_mode);
-    DriveR.set_brake_mode(old_mode);
+    // DriveL.set_brake_mode_all(old_mode);
+    // DriveR.set_brake_mode_all(old_mode);
 }
 
 /**
@@ -275,7 +293,7 @@ void Drive::drive_distance(float distance, float heading, float drive_max_voltag
   float average_position = start_average_position;
   while(drivePID.is_settled() == false){
     average_position = (get_left_position_in()+get_right_position_in())/2.0;
-    float drive_error = distance+start_average_position-average_position;
+    drive_error = distance+start_average_position-average_position;
     float heading_error = reduce_negative_180_to_180(heading - get_absolute_heading());
     float drive_output = drivePID.compute(drive_error);
     float heading_output = headingPID.compute(heading_error);
@@ -284,6 +302,7 @@ void Drive::drive_distance(float distance, float heading, float drive_max_voltag
     heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
 
     drive_with_voltage(drive_output+heading_output, drive_output-heading_output);
+
     delay(10);
   }
 }
@@ -306,6 +325,7 @@ void Drive::left_swing_to_angle(float angle, float swing_max_voltage, float swin
     float error = reduce_negative_180_to_180(angle - get_absolute_heading());
     float output = swingPID.compute(error);
     output = clamp(output, -turn_max_voltage, turn_max_voltage);
+    output = clamp_min_voltage(output, swing_min_voltage);
     DriveL.move(output);
     brake_with_mode_group(DriveR, MotorBrake::hold);
     delay(10);
@@ -322,44 +342,170 @@ void Drive::right_swing_to_angle(float angle, float swing_max_voltage, float swi
     float error = reduce_negative_180_to_180(angle - get_absolute_heading());
     float output = swingPID.compute(error);
     output = clamp(output, -turn_max_voltage, turn_max_voltage);
+    output = clamp_min_voltage(output, swing_min_voltage);
     DriveR.move(-output);
     brake_with_mode_group(DriveL, MotorBrake::hold);
     delay(10);
   }
 }
 
-// /**
-//  * Depending on the drive style, gets the tracker's position.
-//  * 
-//  * @return The tracker position.
-//  */
+/**
+ * Depending on the drive style, gets the tracker's position.
+ * 
+ * @return The tracker position.
+ */
 
-// float Drive::get_ForwardTracker_position(){
-//   if (drive_setup==ZERO_TRACKER_ODOM || drive_setup == TANK_ONE_SIDEWAYS_ENCODER || drive_setup == TANK_ONE_SIDEWAYS_ROTATION){
-//     return(get_right_position_in());
-//   }
-//   if (drive_setup==TANK_ONE_FORWARD_ENCODER || drive_setup == TANK_TWO_ENCODER || drive_setup == HOLONOMIC_TWO_ENCODER){
-//     return(E_ForwardTracker.position(deg)*ForwardTracker_in_to_deg_ratio);
-//   }else{
-//     return(R_ForwardTracker.position(deg)*ForwardTracker_in_to_deg_ratio);
-//   }
-// }
+float Drive::get_ForwardTracker_position(){
+  return Fwd_tracker.get_position()*ForwardTracker_in_to_deg_ratio;
+}
 
-// /**
-//  * Depending on the drive style, gets the tracker's position.
-//  * 
-//  * @return The tracker position.
-//  */
+/**
+ * Depending on the drive style, gets the tracker's position.
+ * 
+ * @return The tracker position.
+ */
 
-// float Drive::get_SidewaysTracker_position(){
-//   if (drive_setup==TANK_ONE_FORWARD_ENCODER || drive_setup == TANK_ONE_FORWARD_ROTATION || drive_setup == ZERO_TRACKER_ODOM){
-//     return(0);
-//   }else if (drive_setup == TANK_TWO_ENCODER || drive_setup == HOLONOMIC_TWO_ENCODER || drive_setup == TANK_ONE_SIDEWAYS_ENCODER){
-//     return(E_SidewaysTracker.position(deg)*SidewaysTracker_in_to_deg_ratio);
-//   }else{
-//     return(R_SidewaysTracker.position(deg)*SidewaysTracker_in_to_deg_ratio);
-//   }
-// }
+float Drive::get_SidewaysTracker_position(){
+  return 0;
+}
+
+void Drive::left_wall_distance(float distance, float heading, float left_wall_dis_target){
+  PID drivePID(distance, drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
+  PID headingPID(reduce_negative_180_to_180(heading - get_absolute_heading()), heading_kp, heading_ki, heading_kd, heading_starti);
+  PID wall_PID(left_wall_dis_target, wall_kp, wall_ki, wall_kd, wall_starti);
+  float start_average_position = (get_left_position_in()+get_right_position_in())/2.0;
+  float average_position = start_average_position;
+  int rev_constant=1;
+  if(distance<0) rev_constant =-1;
+  while(drivePID.is_settled() == false){
+    average_position = (get_left_position_in()+get_right_position_in())/2.0;
+    drive_error = distance+start_average_position-average_position;
+    float heading_error = reduce_negative_180_to_180(heading - get_absolute_heading());
+    float drive_output = drivePID.compute(drive_error);
+    float heading_output = headingPID.compute(heading_error);
+
+    float wall_distance_error = left_wall_dis_target - distance_sensorL.get();
+    // if(fabs(wall_distance_error)>200) wall_distance_error=0;
+    float wall_dist_output = wall_PID.compute(wall_distance_error);
+
+    drive_output = clamp(drive_output, -drive_max_voltage, drive_max_voltage);
+    heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+    wall_dist_output = clamp(wall_dist_output, -wall_max_voltage, wall_max_voltage);
+
+    drive_with_voltage(drive_output+heading_output+wall_dist_output*rev_constant, drive_output-heading_output-wall_dist_output*rev_constant);
+    delay(10);
+  }
+}
+
+void Drive::min_left_wall_distance(float distance, float heading, float left_wall_dis_target, float _drive_min_voltage){
+  PID drivePID(distance, drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
+  PID headingPID(reduce_negative_180_to_180(heading - get_absolute_heading()), heading_kp, heading_ki, heading_kd, heading_starti);
+  PID wall_PID(left_wall_dis_target, wall_kp, wall_ki, wall_kd, wall_starti);
+  float start_average_position = (get_left_position_in()+get_right_position_in())/2.0;
+  float average_position = start_average_position;
+  float left_pwr=0;
+  float right_pwr=0;
+  drivePID.settle_time=10;
+  int rev_constant=1;
+  if(distance<0) rev_constant =-1;
+  while(drivePID.is_settled() == false){
+    average_position = (get_left_position_in()+get_right_position_in())/2.0;
+    drive_error = distance+start_average_position-average_position;
+    float heading_error = reduce_negative_180_to_180(heading - get_absolute_heading());
+    float drive_output = drivePID.compute(drive_error);
+    float heading_output = headingPID.compute(heading_error);
+
+    float wall_distance_error = left_wall_dis_target - distance_sensorL.get();
+    // if(fabs(wall_distance_error)>200) wall_distance_error=0;
+    float wall_dist_output = wall_PID.compute(wall_distance_error);
+
+    drive_output = clamp(drive_output, -drive_max_voltage, drive_max_voltage);
+    heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+    wall_dist_output = clamp(wall_dist_output, -wall_max_voltage, wall_max_voltage);
+    left_pwr = drive_output+heading_output+wall_dist_output;
+    right_pwr = drive_output-heading_output-wall_dist_output;
+    if(drive_output>0 && (drive_output<_drive_min_voltage)){
+      drive_output = _drive_min_voltage;
+    }
+    if(drive_output<0 && drive_output>-_drive_min_voltage){
+      drive_output = -_drive_min_voltage;
+    }
+
+    drive_with_voltage(drive_output+heading_output+wall_dist_output*rev_constant, drive_output-heading_output-wall_dist_output*rev_constant);
+    delay(10);
+  }
+  // drive_settle_time=150;
+  // drive_max_voltage=drive_min_voltage;
+}
+
+void Drive::right_wall_distance(float distance, float heading, float right_wall_dis_target){
+  PID drivePID(distance, drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
+  PID headingPID(reduce_negative_180_to_180(heading - get_absolute_heading()), heading_kp, heading_ki, heading_kd, heading_starti);
+  PID wall_PID(right_wall_dis_target, wall_kp, wall_ki, wall_kd, wall_starti);
+  float start_average_position = (get_left_position_in()+get_right_position_in())/2.0;
+  float average_position = start_average_position;
+  int rev_constant=1;
+  if(distance<0) rev_constant =-1;
+  while(drivePID.is_settled() == false){
+    average_position = (get_left_position_in()+get_right_position_in())/2.0;
+    drive_error = distance+start_average_position-average_position;
+    float heading_error = reduce_negative_180_to_180(heading - get_absolute_heading());
+    float drive_output = drivePID.compute(drive_error);
+    float heading_output = headingPID.compute(heading_error);
+
+    float wall_distance_error = right_wall_dis_target - distance_sensorR.get();
+    // if(fabs(wall_distance_error)>200) wall_distance_error=0;
+    float wall_dist_output = wall_PID.compute(wall_distance_error);
+
+    drive_output = clamp(drive_output, -drive_max_voltage, drive_max_voltage);
+    heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+    wall_dist_output = clamp(wall_dist_output, -wall_max_voltage, wall_max_voltage);
+
+    drive_with_voltage(drive_output+heading_output-wall_dist_output*rev_constant, drive_output-heading_output+wall_dist_output*rev_constant);
+    delay(10);
+  }
+}
+
+void Drive::min_right_wall_distance(float distance, float heading, float right_wall_dis_target, float _drive_min_voltage){
+  PID drivePID(distance, drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
+  PID headingPID(reduce_negative_180_to_180(heading - get_absolute_heading()), heading_kp, heading_ki, heading_kd, heading_starti);
+  PID wall_PID(right_wall_dis_target, wall_kp, wall_ki, wall_kd, wall_starti);
+  float start_average_position = (get_left_position_in()+get_right_position_in())/2.0;
+  float average_position = start_average_position;
+  float left_pwr=0;
+  float right_pwr=0;
+  drivePID.settle_time=10;
+  int rev_constant=1;
+  if(distance<0) rev_constant =-1;
+  while(drivePID.is_settled() == false){
+    average_position = (get_left_position_in()+get_right_position_in())/2.0;
+    drive_error = distance+start_average_position-average_position;
+    float heading_error = reduce_negative_180_to_180(heading - get_absolute_heading());
+    float drive_output = drivePID.compute(drive_error);
+    float heading_output = headingPID.compute(heading_error);
+
+    float wall_distance_error = right_wall_dis_target - distance_sensorR.get();
+      // if(fabs(wall_distance_error)>200) wall_distance_error=0;
+    float wall_dist_output = wall_PID.compute(wall_distance_error);
+
+    drive_output = clamp(drive_output, -drive_max_voltage, drive_max_voltage);
+    heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+    wall_dist_output = clamp(wall_dist_output, -wall_max_voltage, wall_max_voltage);
+    left_pwr = drive_output+heading_output+wall_dist_output;
+    right_pwr = drive_output-heading_output-wall_dist_output;
+    if(drive_output>0 && (drive_output<_drive_min_voltage)){
+      drive_output = _drive_min_voltage;
+    }
+    if(drive_output<0 && drive_output>-_drive_min_voltage){
+      drive_output = -_drive_min_voltage;
+    }
+
+    drive_with_voltage(drive_output+heading_output-wall_dist_output*rev_constant, drive_output-heading_output+wall_dist_output*rev_constant);
+    delay(10);
+  }
+  // drive_settle_time=150;
+  // drive_max_voltage=drive_min_voltage;
+}
 
 /**
  * Background task for updating the odometry.
@@ -386,6 +532,8 @@ void Drive::set_heading(float orientation_deg){
 }
 
 /**
+ * MUST BE CALLED TO START THE ODOMETRY TASK. 
+ * 
  * Resets the robot's coordinates and heading.
  * This is for odom-using robots to specify where the bot is at the beginning
  * of the match.
@@ -400,7 +548,7 @@ void Drive::set_coordinates(float X_position, float Y_position, float orientatio
   set_heading(orientation_deg);
 
   if (odom_task != nullptr) { // is this if() even necessary
-    odom_task->remove();   // stop task
+    odom_task->suspend();   // stop task
     delete odom_task;      // free memory
   }
   odom_task = new Task(position_track_task);
@@ -456,12 +604,14 @@ void Drive::drive_to_point(float X_position, float Y_position, float drive_min_v
   PID headingPID(start_angle_deg-get_absolute_heading(), heading_kp, heading_ki, heading_kd, heading_starti);
   bool line_settled = false;
   bool prev_line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+  // pros::screen::print(TEXT_MEDIUM, 8, "drive_error: %.2f", drive_error);
+  // pros::screen::print(TEXT_MEDIUM, 10, "drivePID.is_settled(): %d", drivePID.is_settled());
   while(!drivePID.is_settled()){
     line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
     if(line_settled && !prev_line_settled){ break; }
     prev_line_settled = line_settled;
 
-    float drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
+    drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
     float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
     float drive_output = drivePID.compute(drive_error);
 
@@ -479,6 +629,9 @@ void Drive::drive_to_point(float X_position, float Y_position, float drive_min_v
 
     drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
     delay(10);
+
+    // pros::screen::print(TEXT_MEDIUM, 8, "drive_error: %.2f", drive_error);
+    // pros::screen::print(TEXT_MEDIUM, 9, "drive_output clamped: %.2f", drive_output);
   }
 }
 
@@ -542,7 +695,7 @@ void Drive::drive_to_pose(float X_position, float Y_position, float angle, float
     float carrot_X = X_position - sin(to_rad(angle)) * (lead * target_distance + setback);
     float carrot_Y = Y_position - cos(to_rad(angle)) * (lead * target_distance + setback);
 
-    float drive_error = hypot(carrot_X-get_X_position(),carrot_Y-get_Y_position());
+    drive_error = hypot(carrot_X-get_X_position(),carrot_Y-get_Y_position());
     float heading_error = reduce_negative_180_to_180(to_deg(atan2(carrot_X-get_X_position(),carrot_Y-get_Y_position()))-get_absolute_heading());
 
     if (drive_error<drive_settle_error || crossed_center_line || drive_error < setback) { 

@@ -109,7 +109,7 @@ float PID::compute(float error){
   }
 
   time_spent_running+=10;
-
+  // pros::screen::print(TEXT_MEDIUM, 4, "PID.kp, %.2f", kp);
   return output;
 }
 

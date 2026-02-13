@@ -51,6 +51,7 @@ class Drive{
         float heading_kd;
         float heading_starti;
 
+        float swing_min_voltage;
         float swing_max_voltage;
         float swing_kp;
         float swing_ki;
@@ -70,7 +71,7 @@ class Drive{
         float wall_kd;
         float wall_starti;
 
-        float drive_error;
+        float drive_error = 0;
 
         Drive(MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial, 
               float wheel_diameter, float motor_gear_ratio, float gyro_scale, 
