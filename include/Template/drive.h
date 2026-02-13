@@ -120,11 +120,12 @@ class Drive{
         void right_swing_to_angle(float angle);
         void right_swing_to_angle(float angle, float swing_max_voltage, float swing_settle_error, float swing_settle_time, float swing_timeout, float swing_kp, float swing_ki, float swing_kd, float swing_starti);
         
-        void left_wall_distance(float distance, float heading, float left_wall_dis_target);
-        void min_left_wall_distance(float distance, float heading, float left_wall_dis_target,float _drive_min_voltage);
-        void right_wall_distance(float distance, float heading, float right_wall_dis_target);
-        void min_right_wall_distance(float distance, float heading, float right_wall_dis_target,float _drive_min_voltage);
-        
+        enum class WallSide{
+          LEFT,
+          RIGHT
+        };
+        void wall_distance(WallSide direction, float distance, float heading, float wall_dis_target, float _drive_min_voltage = 0);
+    
         Odom odom;
         float get_ForwardTracker_position();
         float get_SidewaysTracker_position();
@@ -157,5 +158,5 @@ class Drive{
 
         void control_arcade();
         void control_tank();
-        void control_holonomic();
+        void control_holonomic();    
 };
