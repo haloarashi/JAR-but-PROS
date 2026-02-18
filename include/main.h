@@ -44,6 +44,7 @@
 #include "Template/PID.h"
 #include "Template/util.h"
 #include "Template/drive.h"
+#include "Template/pure-pursuit.h"
 
 #include "autons.h"
 #include "robot-config.h"

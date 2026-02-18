@@ -170,6 +170,8 @@ float deadband(float input, float width){
  * endpoint, and checks if the robot has crossed that line. Allows for
  * very quick settling, and thereby chaining for fast motion control.
  * 
+ * Uses "dot product <x_error, y_error> and <sin(theta), cos(theta)> <= 0"
+ * 
  * @param desired_X The ending X position in inches.
  * @param desired_Y The ending Y position in inches.
  * @param desired_angle_deg The direction of the line to be drawn.
