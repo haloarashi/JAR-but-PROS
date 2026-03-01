@@ -1,21 +1,34 @@
 #include "main.h"
 
-// Motor leftmotor1(1);
-// Motor leftmotor2(2);
-// Motor leftmotor3(3);
+IMU inertial(19);
+Rotation fwd_tracker(16);
+Rotation sideways_tracker(1);  // I just put a random number here but we dont have a sideways tracker
 
-// Motor rightmotor1(4);
-// Motor rightmotor2(5);
-// Motor rightmotor3(6);
+MotorGroup leftMotors({-10, 15, 18}); // negative port number means reversed
+MotorGroup rightMotors({-20, 7, -8}); // negative port number means reversed
 
-IMU inertial(7);
-Rotation fwd_tracker(8);
-Rotation sideways_tracker(9);
+Motor intake_up(9, MotorGears::green);
+Motor intake_mid(17, MotorGears::green);
+Motor intake_down(-6, MotorGears::green);
 
-MotorGroup leftMotors({1, 2, 3}); // negative port number means reversed
-MotorGroup rightMotors({4, 5, 6}); // negative port number means reversed
+adi::DigitalOut claw('C');
+adi::DigitalOut shovel('A');
+adi::DigitalOut lift('B');
+adi::DigitalOut upper('E');
+adi::DigitalOut odomlift('D');
 
+Distance distance_sensorDown(13);
+Distance distance_sensorUp(14);
+Distance distance_sensorL(1);
+Distance distance_sensorR(2);
+Optical block_optical(21);
 
+int intake_stats;
+int intake_jam_count;
+int intake_status_count;
+int intake_task;
+int midintake;
+int upintake;
 
 
 
@@ -39,7 +52,7 @@ Drive chassis(
     // External ratio, must be in decimal, in the format of input teeth/output teeth.
     // If your motor has an 84-tooth gear and your wheel has a 60-tooth gear, this value will be 1.4.
     // If the motor drives the wheel directly, this value is 1:
-    0.75,
+    48/36,
 
     // Gyro scale, this is what your gyro reads when you spin the robot 360 degrees.
     // For most cases 360 will do fine here, but this scale factor can be very helpful when precision is necessary.
@@ -55,15 +68,24 @@ Drive chassis(
     // Input Forward Tracker center distance (a positive distance corresponds to a tracker on the right side of the robot, negative is left.)
     // For a zero tracker tank drive with odom, put the positive distance from the center of the robot to the right side of the drive.
     // This distance is in inches:
-    0.1,
+    -0.41,
 
 
     // Input the Sideways Tracker Port, following the same steps as the Forward Tracker Port:
     sideways_tracker,
 
     // Sideways tracker diameter (reverse to make the direction switch):
-    2,
+    0,
 
     // Sideways tracker center distance (positive distance is behind the center of the robot, negative is in front):
-    1.7
+    0
 );
+
+void init() {
+    leftMotors.set_gearing(E_MOTOR_GEARSET_06);
+    rightMotors.set_gearing(E_MOTOR_GEARSET_06);
+    
+    delay(2500); // wait for imu to calibrate
+    static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
+    Controller(CONTROLLER_MASTER).rumble("..");
+}

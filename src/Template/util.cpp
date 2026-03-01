@@ -348,7 +348,8 @@ void simple_screen_task(){
 		pros::screen::print(TEXT_MEDIUM, 5, "Distance L (mm): %d", distance_sensorL.get());
 		pros::screen::print(TEXT_MEDIUM, 6, "Distance R (mm): %d", distance_sensorR.get());
     pros::screen::print(TEXT_MEDIUM, 7, "Gyro pitch: %.2f", chassis.Gyro.get_pitch());
-    pros::screen::print(TEXT_MEDIUM, 8, "Distance Up (mm): %d", distance_sensorUp.get());
+    pros::screen::print(TEXT_MEDIUM, 8, "last_found_index: %.d", chassis.last_found_index);
+    pros::screen::print(TEXT_MEDIUM, 9, "drive_max_voltage: %.2f", chassis.drive_max_voltage);
     // pros::screen::print(TEXT_MEDIUM, 9, "Mid jam time: %d", mid_jam_time);
     // pros::screen::print(TEXT_MEDIUM, 10, "Unjam attempt time: %d Rest time: %d", unjam_attempt_time, rest_time);
     // pros::screen::print(TEXT_LARGE_CENTER, 9, "Progress: %d", progress);

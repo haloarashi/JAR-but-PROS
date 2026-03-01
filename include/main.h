@@ -43,8 +43,11 @@
 #include "Template/odom.h"
 #include "Template/PID.h"
 #include "Template/util.h"
-#include "Template/drive.h"
+#include "Template/point.h"
+#include "Template/curve-point.h"
+#include "Template/custom-math.h"
 #include "Template/pure-pursuit.h"
+#include "Template/drive.h"
 
 #include "autons.h"
 #include "robot-config.h"

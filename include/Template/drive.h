@@ -161,5 +161,8 @@ class Drive{
 
 
         // Pure Pursuit stuff
-        void go_to_point(float x, float y, float drive_voltage, float heading);
+        void go_to_point(float x, float y, float drive_voltage);
+        int last_found_index = -1;
+        CurvePoint get_follow_point(std::vector<CurvePoint> path_points, Point robot_pos, float follow_radius);
+        void follow_path(std::vector<CurvePoint> path_points);
 };
