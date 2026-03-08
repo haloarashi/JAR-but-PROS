@@ -1,19 +1,22 @@
 #include "main.h"
 
 IMU inertial(19);
-Rotation fwd_tracker(16);
+Rotation fwd_tracker(2); // I just put a random number here but we dont have a forward tracker
 Rotation sideways_tracker(1);  // I just put a random number here but we dont have a sideways tracker
 
-MotorGroup leftMotors({-10, 15, 18}); // negative port number means reversed
-MotorGroup rightMotors({-20, 7, -8}); // negative port number means reversed
+// MotorGroup leftMotors({-10, 15, 18}); // negative port number means reversed
+// MotorGroup rightMotors({-20, 7, -8}); // negative port number means reversed
+
+MotorGroup leftMotors({-16, -20, -14}); // (front, mid, back) negative port number means reversed
+MotorGroup rightMotors({13, 12, 11}); // (front, mid, back) negative port number means reversed
 
 Motor intake_up(9, MotorGears::green);
 Motor intake_mid(17, MotorGears::green);
 Motor intake_down(-6, MotorGears::green);
 
-adi::DigitalOut claw('C');
-adi::DigitalOut shovel('A');
-adi::DigitalOut lift('B');
+adi::DigitalOut claw('B');
+adi::DigitalOut shovel('F');
+adi::DigitalOut lift('G');
 adi::DigitalOut upper('E');
 adi::DigitalOut odomlift('D');
 
@@ -37,6 +40,9 @@ Drive chassis(
     // Add the names of your Drive motors into the motor groups below, separated by commas, i.e. motor_group(Motor1,Motor2,Motor3).
     // You will input whatever motor names you chose when you configured your robot using the sidebar configurer, they don't have to be "Motor1" and "Motor2".
 
+    // Drive Style (see drive.h for option list): 
+    Drive::DriveStyle::ZERO_TRACKER,
+    
     // Left Motors:
     leftMotors,
 
@@ -68,7 +74,7 @@ Drive chassis(
     // Input Forward Tracker center distance (a positive distance corresponds to a tracker on the right side of the robot, negative is left.)
     // For a zero tracker tank drive with odom, put the positive distance from the center of the robot to the right side of the drive.
     // This distance is in inches:
-    -0.41,
+    5.5,
 
 
     // Input the Sideways Tracker Port, following the same steps as the Forward Tracker Port:

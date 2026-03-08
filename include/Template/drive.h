@@ -18,6 +18,23 @@ class Drive{
         Controller master;
 
     public: 
+        enum class DriveStyle{
+            ZERO_TRACKER, 
+
+            // TANK_ONE_FORWARD_ENCODER, 
+            TANK_ONE_FORWARD_ROTATION, 
+            // TANK_ONE_SIDEWAYS_ENCODER, 
+            TANK_ONE_SIDEWAYS_ROTATION, 
+
+            // TANK_TWO_ENCODER, 
+            TANK_TWO_ROTATION
+
+            // HOLONOMIC_TWO_ENCODER, 
+            // HOLONOMIC_TWO_ROTATION
+        };
+
+        DriveStyle drive_style = DriveStyle::ZERO_TRACKER;
+    
         MotorGroup& DriveL;
         MotorGroup& DriveR;
         IMU& Gyro;
@@ -73,7 +90,7 @@ class Drive{
 
         float drive_error = 0;
 
-        Drive(MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial, 
+        Drive(DriveStyle drive_style, MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial, 
               float wheel_diameter, float motor_gear_ratio, float gyro_scale, 
               Rotation& fwd_tracker, float fwd_tracker_diameter, float fwd_tracker_dist, 
               Rotation& sideways_tracker, float sideways_tracker_diameter, float sideways_tracker_dist);

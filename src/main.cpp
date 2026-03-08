@@ -12,10 +12,12 @@ void disabled() {
 
 void competition_initialize() {
 	init();
+	claw.set_value(true);
 }
 
 void autonomous() {
 	default_constants();
+	claw.set_value(false);
 	chassis.set_coordinates(0, 0, 0);
 	std::vector<CurvePoint> path_points = {
 		// CurvePoint(Point(0, 0), 40, 0, 0, 0, 0, 0),
@@ -31,6 +33,7 @@ void autonomous() {
 
 void opcontrol() {
 	while (true) {
+		claw.set_value(false);
 		chassis.control_arcade();
 		delay(10);
 	}

@@ -1,10 +1,10 @@
 #include "main.h"
 
-Drive::Drive(MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial, 
+Drive::Drive(DriveStyle drive_style, MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial, 
              float wheel_diameter, float motor_gear_ratio, float gyro_scale, 
              Rotation& fwd_tracker, float fwd_tracker_diameter, float fwd_tracker_dist, 
              Rotation& sideways_tracker, float sideways_tracker_diameter, float sideways_tracker_dist):
-    
+    drive_style(drive_style),
     DriveL(left_motors), 
     DriveR(right_motors), 
     Gyro(inertial), 
@@ -12,7 +12,7 @@ Drive::Drive(MotorGroup& left_motors, MotorGroup& right_motors, IMU& inertial,
     wheel_diameter(wheel_diameter), 
     wheel_ratio(motor_gear_ratio), 
     gyro_scale(gyro_scale), 
-    drive_in_to_deg_ratio(M_PI*wheel_diameter*wheel_ratio/360.0),
+    drive_in_to_deg_ratio(M_PI*wheel_diameter*wheel_ratio/36000.0), // 36000 because using PROS API motor.get_position() returns centidegrees
 
     Fwd_tracker(fwd_tracker), 
     ForwardTracker_diameter(fwd_tracker_diameter), 
@@ -195,7 +195,7 @@ float Drive::get_absolute_heading(){
  * @return Left position in inches.
  */
 float Drive::get_left_position_in(){
-  return( DriveL.get_position() *drive_in_to_deg_ratio ); //TODO: check if get_position() returns deg
+  return( DriveL.get_position() *drive_in_to_deg_ratio ); 
 }
 
 /**
@@ -356,6 +356,12 @@ void Drive::right_swing_to_angle(float angle, float swing_max_voltage, float swi
  */
 
 float Drive::get_ForwardTracker_position(){
+  if(drive_style == DriveStyle::ZERO_TRACKER || 
+     drive_style == DriveStyle::TANK_ONE_SIDEWAYS_ROTATION){
+    // return DriveR.get_position() * drive_in_to_deg_ratio;
+    return get_right_position_in();
+  }
+  
   return Fwd_tracker.get_position()*ForwardTracker_in_to_deg_ratio;
 }
 
@@ -366,7 +372,12 @@ float Drive::get_ForwardTracker_position(){
  */
 
 float Drive::get_SidewaysTracker_position(){
-  return 0; // 0 bc only fwd tracking wheel exists TODO: use if-statement to decide 0 or actual stuff
+  if(drive_style == DriveStyle::ZERO_TRACKER || 
+     drive_style == DriveStyle::TANK_ONE_FORWARD_ROTATION){
+    return 0;
+  }
+  
+  return Sideways_tracker.get_position()*SidewaysTracker_in_to_deg_ratio;
 }
 
 void Drive::wall_distance(WallSide direction, float distance, float heading, float wall_dis_target, float _drive_min_voltage){
