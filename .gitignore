@@ -1,16 +1,17 @@
-.vscode/
-.idea/
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.bin
+*.elf
+
+# PROS
 bin/
-.*.sw*
-template/
-version
-cquery_log.txt
+.vscode/
+.cache/
 compile_commands.json
-.ccls-cache/
-.ccls
 temp.log
 temp.errors
+*.ini
 .d/
-.clangd/
-.cache/
-.DS_Store
