@@ -1,6 +1,6 @@
 #include "main.h"
 
-IMU inertial(19);
+IMU inertial(3);
 Rotation fwd_tracker(2); // I just put a random number here but we dont have a forward tracker
 Rotation sideways_tracker(1);  // I just put a random number here but we dont have a sideways tracker
 
@@ -68,7 +68,8 @@ Drive chassis(
     // If this is a rotation sensor, enter it in "PORT1" format, inputting the port below.
     fwd_tracker,
 
-    // Input the Forward Tracker diameter (reverse it to make the direction switch):
+    // Input the Forward Tracker diameter (reverse it to make the direction switch)
+    // For a tank drive using odom without a forward tracker, this value is useless and does not affect anything:
     2,
 
     // Input Forward Tracker center distance (a positive distance corresponds to a tracker on the right side of the robot, negative is left.)
@@ -80,7 +81,7 @@ Drive chassis(
     // Input the Sideways Tracker Port, following the same steps as the Forward Tracker Port:
     sideways_tracker,
 
-    // Sideways tracker diameter (reverse to make the direction switch):
+    // Sideways tracker diameter (reverse it to make the direction switch):
     0,
 
     // Sideways tracker center distance (positive distance is behind the center of the robot, negative is in front):
@@ -92,6 +93,6 @@ void init() {
     rightMotors.set_gearing(E_MOTOR_GEARSET_06);
     
     delay(2500); // wait for imu to calibrate
-    static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
+    // static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
     Controller(CONTROLLER_MASTER).rumble("..");
 }

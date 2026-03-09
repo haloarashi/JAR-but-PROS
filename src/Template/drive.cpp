@@ -12,7 +12,7 @@ Drive::Drive(DriveStyle drive_style, MotorGroup& left_motors, MotorGroup& right_
     wheel_diameter(wheel_diameter), 
     wheel_ratio(motor_gear_ratio), 
     gyro_scale(gyro_scale), 
-    drive_in_to_deg_ratio(M_PI*wheel_diameter*wheel_ratio/36000.0), // 36000 because using PROS API motor.get_position() returns centidegrees
+    drive_in_to_deg_ratio(M_PI*wheel_diameter*wheel_ratio/360.0), // 360 is correct while 36000 isn't for some reason. 
 
     Fwd_tracker(fwd_tracker), 
     ForwardTracker_diameter(fwd_tracker_diameter), 
