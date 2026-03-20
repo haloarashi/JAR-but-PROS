@@ -1,20 +1,21 @@
 #include "drive.h"
 
-void Drive::go_to_point(float X_position, float Y_position, float drive_voltage){
+void Drive::go_to_point(float X_position, float Y_position, float drive_voltage, float drive_settle_error){
     // PID drivePID(hypot(X_position-get_X_position(),Y_position-get_Y_position()), drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
     float start_angle_deg = to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()));
     PID headingPID(start_angle_deg-get_absolute_heading(), heading_kp, heading_ki, heading_kd, heading_starti);
-    bool line_settled = false;
-    bool prev_line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+    // bool line_settled = false;
+    // bool prev_line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+    drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
 
-    while(true){
-        line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+    while(drive_error > drive_settle_error){
+        bool line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
         // if(line_settled && !prev_line_settled){ break; }
         // prev_line_settled = line_settled;
         if(line_settled){ break; }
-        pros::screen::print(TEXT_LARGE, 7, "line_settled: %d", line_settled);
+        // pros::screen::print(TEXT_LARGE, 7, "line_settled: %d", line_settled);
 
-        // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // used only to update drive_error so that otherparts of the code can access the variable correctly
+        drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
         float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
         float drive_output = drive_voltage;
 
@@ -28,7 +29,7 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage)
         drive_output = clamp(drive_output, -fabs(heading_scale_factor)*drive_max_voltage, fabs(heading_scale_factor)*drive_max_voltage);
         heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
 
-        drive_output = clamp_min_voltage(drive_output, drive_min_voltage);
+        // drive_output = clamp_min_voltage(drive_output, heading_scale_factor*drive_min_voltage);
 
         drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
         delay(10);
@@ -38,7 +39,7 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage)
 CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point robot_pos, float follow_radius){
     CurvePoint follow_me = CurvePoint(path_points[last_found_index + 1]);
     
-    for(int i = last_found_index + 1; i < path_points.size()-2; i++){ // -2 explanation: -1 is because we need two points per loop, and another -1 is because an extra point is always appended to the end of path_points
+    for(int i = last_found_index + 1; i < path_points.size()-1; i++){ // !!!!!-2 explanation: -1 is because we need two points per loop, and another -1 is because an extra point is always appended to the end of path_points
         CurvePoint start = path_points[i];
         CurvePoint end = path_points[i+1];
 
@@ -64,7 +65,7 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
             follow_me = end;
         }
         else{
-            follow_me = CurvePoint(follow_point, end.drive_voltage, end.turn_voltage, end.follow_distance, end.point_length, end.slow_down_turn_radians, end.slow_down_turn_amount);
+            follow_me = CurvePoint(follow_point, end.drive_voltage, end.turn_voltage, end.follow_distance, end.drive_settle_error, end.point_length, end.slow_down_turn_radians, end.slow_down_turn_amount);
         }
 
         last_found_index = i;
@@ -77,30 +78,25 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
 void Drive::follow_path(std::vector<CurvePoint> path_points){
     last_found_index = -1;
 
-    // extend path by 12in so robot doesn't oscillate crazily towards the end of the path
+    // Extend path by 12in so robot doesn't oscillate crazily towards the end of the path
     // TODO: this probably isn't properly implemented in the index-determining codes yet
     Point extend_point = extend_path(path_points[path_points.size()-2].to_point(), path_points[path_points.size()-1].to_point(), 12);
-    path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].turn_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
+    path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].turn_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
 
-    // figure out where robot is on the path when starting to follow it
-    for(int i = last_found_index + 1; i < path_points.size()-1; i++){
+    // Figure out where robot is on the path when starting to follow it
+    for(int i = last_found_index + 1; i < path_points.size()-1; i++){ // -1 because last_found_index starts at -1, which is out of bounds
         if(is_in_segment(Point(get_X_position(), get_Y_position()), path_points[i].to_point(), path_points[i+1].to_point())){
             last_found_index = i - 1; // -1 because loop starts with last_found_index + 1
             break;
         }
     }
-    
-    pros::screen::print(TEXT_MEDIUM, 2, "last_found_index: %d", last_found_index);
-    pros::screen::print(TEXT_MEDIUM, 3, "path_points.size(): %d", (int)path_points.size());
 
-    // follow the path
-    while(last_found_index < (int)path_points.size() - 1){
+    // Follow the path
+    while(last_found_index < (int)path_points.size() - 2){ // -2 explanation: -1 is because we need two points per loop, and another -1 is because an extra point is always appended to the end of path_points
         Point robot_pos = Point(get_X_position(), get_Y_position(), get_absolute_heading());
         CurvePoint follow_me = get_follow_point(path_points, robot_pos, path_points[last_found_index + 1].follow_distance); // last_found_index + 1 or + 2?
-        pros::screen::print(TEXT_MEDIUM, 1, "follow_me: %.2f, %.2f", follow_me.x, follow_me.y);
-        go_to_point(follow_me.x, follow_me.y, follow_me.drive_voltage);
-        pros::screen::print(TEXT_LARGE, 7, "hiiiiiiiiiii");
+        // pros::screen::print(TEXT_MEDIUM, 1, "follow_me: %.2f, %.2f", follow_me.x, follow_me.y);
+        go_to_point(follow_me.x, follow_me.y, follow_me.drive_voltage, follow_me.drive_settle_error);
+        // pros::screen::print(TEXT_LARGE, 7, "last_found_index: %d", last_found_index);
     }
 }
-
-// current problem: last_found_index does not increment and stays at -1, even though the code enters go_to_point(). go_to_point() does not settle. 

@@ -39,3 +39,5 @@ double mm_to_inch(double mm);
 
 void wait_until(std::function<bool()> condition, int check_interval_ms, int timeout_ms);
 void wait_until_bool(bool condition, int check_interval_ms, int timeout_ms);
+
+void print_curvepoints(std::vector<CurvePoint> points);

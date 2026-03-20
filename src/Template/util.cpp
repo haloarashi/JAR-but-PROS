@@ -1,5 +1,6 @@
 #include "main.h"
 #include <cmath>
+#include <vector>
 
 void brake_with_mode(Motor& motor, MotorBrake new_mode) {
     MotorBrake old_mode = motor.get_brake_mode();
@@ -348,14 +349,20 @@ void simple_screen_task(){
 		pros::screen::print(TEXT_MEDIUM, 5, "Distance L (mm): %d", distance_sensorL.get());
 		pros::screen::print(TEXT_MEDIUM, 6, "Distance R (mm): %d", distance_sensorR.get());
     pros::screen::print(TEXT_MEDIUM, 7, "Gyro pitch: %.2f", chassis.Gyro.get_pitch());
-    pros::screen::print(TEXT_MEDIUM, 8, "last_found_index: %.d", chassis.last_found_index);
+    pros::screen::print(TEXT_MEDIUM, 8, "last_found_index: %d", chassis.last_found_index);
     pros::screen::print(TEXT_MEDIUM, 9, "drive_max_voltage: %.2f", chassis.drive_max_voltage);
     // pros::screen::print(TEXT_MEDIUM, 9, "Mid jam time: %d", mid_jam_time);
     // pros::screen::print(TEXT_MEDIUM, 10, "Unjam attempt time: %d Rest time: %d", unjam_attempt_time, rest_time);
     // pros::screen::print(TEXT_LARGE_CENTER, 9, "Progress: %d", progress);
 
-    delay(20);
-    screen_time += 20;
+    delay(40);
+    screen_time += 40;
+  }
+}
+
+void print_curvepoints(std::vector<CurvePoint> points){
+  for(int i = 0; i < (int)points.size(); i++){
+    pros::screen::print(TEXT_MEDIUM, i+1, "Point %d: x %.2f, y %.2f", i, points[i].x, points[i].y);
   }
 }
 
