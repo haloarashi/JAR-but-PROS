@@ -19,19 +19,128 @@ void autonomous() {
 	default_constants();
 	claw.set_value(false);
 	chassis.set_coordinates(0, 0, 0);
-	std::vector<CurvePoint> path_points = {
-		// CurvePoint(Point(0, 0), 40, 0, 0, 0, 0, 0),
-		CurvePoint(Point(0, 10, 0), 30, 20, 3, 3, 3, to_rad(30), .5),
-		CurvePoint(Point(25, 15, 10), 80, 20, 3, 3, 3, to_rad(30), .5),
-		// CurvePoint(Point(20, 20, 0), 127, 40, 3, 3, 3, to_rad(30), .5),
-		// CurvePoint(Point(25, 30), 10, 40, 3, 3, 3, to_rad(30), .5)
-	};
 
-	// Point extend_point = extend_path(path_points[path_points.size()-2].to_point(), path_points[path_points.size()-1].to_point(), 12);
-    // path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].turn_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
-	// print_curvepoints(path_points);
+	// std::vector<CurvePoint> path_points = {
+	// 	CurvePoint(Point(0, 20, 0), 80, 60, 3, 3, 3, to_rad(30), .5),
+	// 	CurvePoint(Point(25, 20, 90), 60, 60, 3, 3, 3, to_rad(30), .5),
+	// 	// CurvePoint(Point(20, 20, 0), 127, 40, 3, 3, 3, to_rad(30), .5),
+	// 	// CurvePoint(Point(25, 30), 10, 40, 3, 3, 3, to_rad(30), .5)
+	// };
+	
+	// chassis.follow_path(path_points);
 
-	chassis.follow_path(path_points);
+	std::vector<CurvePoint> path_points = parse_point_data(R"(-141.897,35.391,120,354.2
+-141.881,37.391,120
+-141.837,39.391,120
+-141.759,41.389,120
+-141.653,43.386,120
+-141.513,45.381,120
+-141.342,47.374,120
+-141.137,49.363,120
+-140.898,51.349,120
+-140.627,53.331,120
+-140.319,55.307,120
+-139.977,57.277,120
+-139.598,59.241,120
+-139.183,61.197,120
+-138.731,63.146,120
+-138.24,65.084,120
+-137.71,67.013,120
+-137.142,68.93,120
+-136.532,70.835,120
+-135.881,72.726,120
+-135.19,74.603,120
+-134.456,76.463,120
+-133.677,78.305,120
+-132.856,80.129,120
+-131.991,81.932,120
+-131.081,83.713,120
+-130.124,85.469,120
+-129.122,87.2,120
+-128.073,88.903,120
+-126.979,90.576,120
+-125.836,92.218,120
+-124.646,93.825,120
+-123.409,95.396,120
+-122.125,96.93,120
+-120.794,98.423,120
+-119.418,99.874,120
+-117.996,101.28,120
+-116.528,102.638,120
+-115.016,103.947,120
+-113.461,105.205,120
+-111.865,106.41,120
+-110.23,107.561,120
+-108.556,108.656,120
+-106.847,109.694,120
+-105.102,110.671,120
+-103.324,111.588,120
+-101.517,112.444,120
+-99.682,113.24,120
+-97.822,113.975,120
+-95.939,114.648,120
+-94.034,115.257,120
+-92.111,115.806,120
+-90.173,116.296,120
+-88.219,116.726,120
+-86.254,117.095,120
+-84.278,117.407,120
+-82.295,117.664,120
+-80.305,117.862,120
+-78.311,118.012,120,0
+-76.315,118.145,120
+-74.32,118.292,120
+-72.327,118.451,120
+-70.334,118.621,120
+-68.342,118.8,120
+-66.351,118.988,120
+-64.36,119.183,120
+-62.371,119.384,120
+-60.381,119.589,120
+-58.392,119.799,120
+-56.403,120.01,120
+-54.415,120.223,120
+-52.426,120.436,120
+-50.437,120.647,120
+-48.448,120.856,120
+-46.459,121.06,120
+-44.469,121.259,120
+-42.478,121.449,120
+-40.486,121.63,120
+-38.493,121.799,120
+-36.499,121.954,120
+-34.504,122.09,120
+-32.507,122.206,120
+-30.509,122.296,120
+-28.51,122.357,120
+-26.51,122.38,120
+-24.51,122.36,120
+-22.512,122.284,120
+-20.517,122.141,120
+-18.531,121.91,120
+-16.56,121.57,120
+-14.622,121.08,120
+-12.747,120.387,120
+-10.997,119.425,120
+-9.496,118.111,120
+-8.42,116.434,120
+-7.878,114.516,120
+-7.822,112.52,120
+-8.116,110.544,120
+-8.652,108.619,120
+-9.357,106.748,120
+-10.184,104.927,120
+-11.104,103.151,120
+-12.096,101.415,120
+-13.145,99.712,120
+-14.09,98.256,120,0)");
+	
+	Point extend_point = extend_path(path_points[path_points.size()-2].point, path_points[path_points.size()-1].point, 12);
+    path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].heading_max_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
+	print_curvepoints(path_points);
+
+	
+	chassis.drive_stop(MotorBrake::brake);
 }
 
 void opcontrol() {

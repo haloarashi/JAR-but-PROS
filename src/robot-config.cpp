@@ -93,6 +93,6 @@ void init() {
     rightMotors.set_gearing(E_MOTOR_GEARSET_06);
     
     delay(2500); // wait for imu to calibrate
-    static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
+    // static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
     Controller(CONTROLLER_MASTER).rumble("..");
 }

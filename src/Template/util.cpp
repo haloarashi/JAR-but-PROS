@@ -354,16 +354,33 @@ void simple_screen_task(){
     // pros::screen::print(TEXT_MEDIUM, 9, "Mid jam time: %d", mid_jam_time);
     // pros::screen::print(TEXT_MEDIUM, 10, "Unjam attempt time: %d Rest time: %d", unjam_attempt_time, rest_time);
     // pros::screen::print(TEXT_LARGE_CENTER, 9, "Progress: %d", progress);
+    
+    printf("X: %.2f,  Y: %.2f, Heading: %.2f\n", chassis.get_X_position(), chassis.get_Y_position(), chassis.get_absolute_heading());
+		printf("DT L temp: %.2f, %.2f, %.2f\n", chassis.DriveL.get_temperature(0), chassis.DriveL.get_temperature(1), chassis.DriveL.get_temperature(2));
+		printf("DT R temp: %.2f, %.2f, %.2f\n", chassis.DriveR.get_temperature(0), chassis.DriveR.get_temperature(1), chassis.DriveR.get_temperature(2));
+		printf("Distance L (mm): %d\n", distance_sensorL.get());
+		printf("Distance R (mm): %d\n", distance_sensorR.get());
+    printf("Gyro pitch: %.2f\n", chassis.Gyro.get_pitch());
+    printf("last_found_index: %d\n", chassis.last_found_index);
+    printf("drive_max_voltage: %.2f\n", chassis.drive_max_voltage);
+    printf("\n");
+    printf("\n");
+    printf("\n");
 
-    delay(40);
-    screen_time += 40;
+    delay(50);
+    screen_time += 50;
   }
 }
 
 void print_curvepoints(std::vector<CurvePoint> points){
   for(int i = 0; i < (int)points.size(); i++){
-    pros::screen::print(TEXT_MEDIUM, i+1, "Point %d: x %.2f, y %.2f", i, points[i].x, points[i].y);
+    print_point(points[i].point, i);
+    // TODO: also print drive_voltage, heading_max_voltage, and follow_distance
   }
+}
+
+void print_point(Point point, int line){
+  pros::screen::print(TEXT_MEDIUM, line, "Point: x %.2f, y %.2f, heading %.2f, has_heading: %s", point.x, point.y, point.heading, point.has_heading ? "true" : "false");
 }
 
 double mm_to_inch(double mm){

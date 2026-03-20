@@ -41,3 +41,5 @@ void wait_until(std::function<bool()> condition, int check_interval_ms, int time
 void wait_until_bool(bool condition, int check_interval_ms, int timeout_ms);
 
 void print_curvepoints(std::vector<CurvePoint> points);
+
+void print_point(Point point, int line);
