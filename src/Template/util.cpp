@@ -246,6 +246,10 @@ double mm_to_inch(double mm){
   return(mm/25.4);
 }
 
+double cm_to_inch(double cm){
+  return(cm/2.54);
+}
+
 void wait_until(std::function<bool()> condition, int check_interval_ms, int timeout_ms) {
   while (!condition() && (timeout_ms > 0)) {
     delay(check_interval_ms);

@@ -21,11 +21,11 @@ std::vector<CurvePoint> parse_point_data(std::string point_data){
         }
 
         if(int(values.size()) == 3){
-            CurvePoint point = CurvePoint(Point(values[0], values[1]), values[2], chassis.turn_max_voltage, chassis.follow_distance);
+            CurvePoint point = CurvePoint(Point(cm_to_inch(values[0]), cm_to_inch(values[1])), values[2], chassis.turn_max_voltage, chassis.follow_distance);
             path_points.push_back(point);
         }
         else{
-            CurvePoint point = CurvePoint(Point(values[0], values[1], values[3]), values[2], chassis.turn_max_voltage, chassis.follow_distance);
+            CurvePoint point = CurvePoint(Point(cm_to_inch(values[0]), cm_to_inch(values[1]), values[3]), values[2], chassis.turn_max_voltage, chassis.follow_distance);
             path_points.push_back(point);
         }
     }

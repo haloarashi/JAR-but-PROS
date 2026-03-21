@@ -134,9 +134,34 @@ void print_curvepoints(std::vector<CurvePoint> points){
   for(int i = 0; i < (int)points.size(); i++){
     print_point(points[i].point, i);
     // TODO: also print drive_voltage, heading_max_voltage, and follow_distance
+    // TODO: add a way to edit drive_voltage, heading_max_voltage, and follow_distance for each point
   }
 }
 
 void print_point(Point point, int line){
-  pros::screen::print(TEXT_MEDIUM, line, "Point: x %.2f, y %.2f, heading %.2f, has_heading: %s", point.x, point.y, point.heading, point.has_heading ? "true" : "false");
+  screen::print(TEXT_MEDIUM, line, "Point: x %.1f, y %.1f, h %.0f, has_h: %s", point.x, point.y, point.heading, point.has_heading ? "true" : "false");
+}
+
+// vex screen is 480*240, with (0, 0) in the top left
+void init_map(){
+  screen::set_pen(pros::c::COLOR_WHITE);
+  screen::draw_rect(120, 0, 360, 239);
+}
+
+void update_map(){
+  int robot_x = chassis.get_X_position() / 140.41 * 120 + 120;
+  int robot_y = 120 - chassis.get_Y_position() / 140.41 * 120;
+  
+  screen::set_pen(pros::c::COLOR_YELLOW_GREEN);
+  screen::draw_pixel(robot_x, robot_y);
+
+  printf("last_found_index: %d\n", chassis.last_found_index);
+}
+
+void map_task(){
+  init_map();
+  while(true){
+    update_map();
+    delay(50);
+  }
 }

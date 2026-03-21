@@ -6,15 +6,11 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage,
     PID headingPID(start_angle_deg-get_absolute_heading(), heading_kp, heading_ki, heading_kd, heading_starti);
     // bool line_settled = false;
     // bool prev_line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
-    drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
+    // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
 
     // while(drive_error > drive_settle_error){
     while(true){
         bool line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
-        // if(line_settled && !prev_line_settled){ break; }
-        // prev_line_settled = line_settled;
-        // if(line_settled){ break; }
-        // pros::screen::print(TEXT_LARGE, 7, "line_settled: %d", line_settled);
 
         drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
         float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
@@ -33,11 +29,12 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage,
         // drive_output = clamp_min_voltage(drive_output, heading_scale_factor*drive_min_voltage);
 
         if(line_settled){
-            drive_output = 0;
-        }
-        if(line_settled && fabs(heading_error) < turn_settle_error){
+            // drive_output = 0;
             break;
         }
+        // if(line_settled && fabs(heading_error) < turn_settle_error){
+        //     break;
+        // }
         
         drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
         delay(10);
