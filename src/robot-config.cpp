@@ -1,14 +1,21 @@
 #include "main.h"
 
-IMU inertial(3);
+// IMU inertial(3); // 67V
+IMU inertial(6); // 66995A
 Rotation fwd_tracker(2); // I just put a random number here but we dont have a forward tracker
 Rotation sideways_tracker(1);  // I just put a random number here but we dont have a sideways tracker
 
+// 66994T
 // MotorGroup leftMotors({-10, 15, 18}); // negative port number means reversed
 // MotorGroup rightMotors({-20, 7, -8}); // negative port number means reversed
 
-MotorGroup leftMotors({-16, -20, -14}); // (front, mid, back) negative port number means reversed
-MotorGroup rightMotors({13, 12, 11}); // (front, mid, back) negative port number means reversed
+// 67V
+// MotorGroup leftMotors({-16, -20, -14}); // (front, mid, back) negative port number means reversed
+// MotorGroup rightMotors({13, 12, 11}); // (front, mid, back) negative port number means reversed
+
+// 66995A
+MotorGroup leftMotors({-3, 5, -7}); // (order not known) negative port number means reversed
+MotorGroup rightMotors({2, 9, -15}); // (order not known) negative port number means reversed
 
 Motor intake_up(9, MotorGears::green);
 Motor intake_mid(17, MotorGears::green);
@@ -94,5 +101,6 @@ void init() {
     
     delay(2500); // wait for imu to calibrate
     // static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
+    static Task screen_task(map_task); 
     Controller(CONTROLLER_MASTER).rumble("..");
 }
