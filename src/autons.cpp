@@ -22,5 +22,5 @@ void default_constants(){
   chassis.set_turn_exit_conditions(1.82, 50, 2000);
   chassis.set_swing_exit_conditions(1, 250, 3000);
 
-  chassis.follow_distance = 3;
+  chassis.follow_distance = 6;
 }

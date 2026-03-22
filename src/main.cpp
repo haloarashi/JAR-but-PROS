@@ -29,33 +29,24 @@ void autonomous() {
 	
 	// chassis.follow_path(path_points);
 
-	std::vector<CurvePoint> path_points = parse_point_data(R"(-37.69,42.386,115.031,270
--42.655,43.458,113.272
--47.546,44.825,111.389
--52.332,46.522,109.455
--56.968,48.592,105.916
--61.359,51.141,104.607
--65.456,54.137,103.619
--69.181,57.586,105.247
--72.484,61.443,109.223
--75.381,65.614,111.849
--77.96,69.99,117.9
--80.35,74.473,123.844
--82.714,78.969,116.494
--85.227,83.383,109.069
--88.06,87.597,102.474
--91.346,91.464,98.289
--95.138,94.835,97.927
--99.383,97.613,101.259
--103.967,99.793,103.785
--108.79,101.378,109.248
--113.734,102.537,111.798
--118.756,103.291,116.071
--123.816,103.731,117.76
--128.891,103.926,119.173
--134.182,103.932,119.633,270
--134.182,103.932,0,270
-)");
+// 	std::vector<CurvePoint> path_points = parse_point_data(R"(-37.69,42.386,113.272,270
+// -47.537,44.86,109.455
+// -56.928,48.69,105.916
+// -65.448,54.167,104.103
+// -72.494,61.459,111.849
+// -77.97,70.008,117.9
+// -82.727,78.986,112.752
+// -88.092,87.6,99.97
+// -95.184,94.818,99.217
+// -104.001,99.806,103.785
+// -113.792,102.446,114.085
+// -123.866,103.661,117.76
+// -134.182,103.932,119.633,270
+// -134.182,103.932,0,270
+// )");
+
+	std::vector<CurvePoint> path_points = parse_point_data(R"(-55,42.386,120,270
+		-30, 42.386,120)");
 	
 	// Point extend_point = extend_path(path_points[path_points.size()-2].point, path_points[path_points.size()-1].point, 12);
     // path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].heading_max_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
