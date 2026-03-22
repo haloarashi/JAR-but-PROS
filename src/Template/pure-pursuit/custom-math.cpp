@@ -67,3 +67,18 @@ Point extend_path(Point line_point_1, Point line_point_2, float extension_length
     float line_angle = atan2(line_point_2.y - line_point_1.y, line_point_2.x - line_point_1.x);
     return Point(line_point_2.x + cos(line_angle)*extension_length_in, line_point_2.y + sin(line_angle)*extension_length_in);
 }
+
+// dot(AR, AB) > |AB|²
+// Project AR onto AB, if the projection is longer than AB, then the robot is past the point. 
+bool is_past_segment(Point robot_pos, Point line_point_1, Point line_point_2){
+    float ABx = line_point_2.x - line_point_1.x;
+    float ABy = line_point_2.y - line_point_1.y;
+
+    float ARx = robot_pos.x - line_point_1.x;
+    float ARy = robot_pos.y - line_point_1.y;
+
+    float dot_AR_AB = ARx * ABx + ARy * ABy;
+    float AB_length_squared = ABx * ABx + ABy * ABy; // basically pt_to_pt_distance squared but without the computation of sqrt then square
+
+    return dot_AR_AB > AB_length_squared;
+}

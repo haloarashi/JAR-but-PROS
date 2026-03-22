@@ -10,18 +10,19 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage,
     // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
 
     // while(drive_error > drive_settle_error){
-    while(true){
-        bool line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+    // while(true){
+        // bool line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
 
-        drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
+        // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
+        
         float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
-        float drive_output = drive_voltage;
-
         float heading_scale_factor = cos(to_rad(heading_error));
-        drive_output*=heading_scale_factor;
+        
         heading_error = reduce_negative_90_to_90(heading_error);
         float heading_output = headingPID.compute(heading_error);
         
+        float drive_output = drive_voltage * heading_scale_factor;
+
         // if (drive_error<drive_settle_error) { heading_output = 0; }
 
         drive_output = clamp(drive_output, -fabs(heading_scale_factor)*drive_max_voltage, fabs(heading_scale_factor)*drive_max_voltage);
@@ -29,17 +30,17 @@ void Drive::go_to_point(float X_position, float Y_position, float drive_voltage,
 
         // drive_output = clamp_min_voltage(drive_output, heading_scale_factor*drive_min_voltage);
 
-        if(line_settled){
-            // drive_output = 0;
-            break;
-        }
+        // if(line_settled){
+        //     // drive_output = 0;
+        //     break;
+        // }
         // if(line_settled && fabs(heading_error) < turn_settle_error){
         //     break;
         // }
         
         drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
-        delay(10);
-    }
+    //     delay(10);
+    // }
 }
 
 CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point robot_pos, float follow_radius){
@@ -71,7 +72,7 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
             follow_me = CurvePoint(follow_point, end.drive_voltage, end.heading_max_voltage, end.follow_distance, end.drive_settle_error, end.point_length, end.slow_down_turn_radians, end.slow_down_turn_amount);
         }
 
-        last_found_index = i;
+        // last_found_index = i;
         break;
     }
 
@@ -86,7 +87,7 @@ void Drive::follow_path(std::vector<CurvePoint> path_points){
     path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].heading_max_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
 
     // Figure out where robot is on the path when starting to follow it
-    for(int i = last_found_index + 1; i < path_points.size()-1; i++){ // -1 because last_found_index starts at -1, which is out of bounds
+    for(int i = last_found_index + 1; i < path_points.size()-2; i++){ // -1 because last_found_index starts at -1, which is out of bounds
         if(is_in_segment(Point(get_X_position(), get_Y_position()), path_points[i].point, path_points[i+1].point)){
             last_found_index = i - 1; // -1 because loop starts with last_found_index + 1
             break;
@@ -94,15 +95,14 @@ void Drive::follow_path(std::vector<CurvePoint> path_points){
     }
 
     // Follow the path
-    while(true){
+    while(last_found_index < (int)path_points.size() - 2){ // while we're not following the last point
         Point robot_pos = Point(get_X_position(), get_Y_position(), get_absolute_heading());
         CurvePoint follow_me = get_follow_point(path_points, robot_pos, path_points[last_found_index + 1].follow_distance); // last_found_index + 1 is the next point (the point we are following)
     
-        if(last_found_index < (int)path_points.size() - 2){ // if we're not following the last point
-            go_to_point(follow_me.point.x, follow_me.point.y, follow_me.drive_voltage, follow_me.heading_max_voltage, follow_me.drive_settle_error);
-        }
-        else{
-            break;
+        go_to_point(follow_me.point.x, follow_me.point.y, follow_me.drive_voltage, follow_me.heading_max_voltage, follow_me.drive_settle_error);
+        
+        if(is_past_segment(robot_pos, path_points[last_found_index].point, path_points[last_found_index + 1].point)){ // TODO: THIS WILL CRASH BECAUSE last_found_index CAN BE -1. 
+            last_found_index++;
         }
     }
 }
