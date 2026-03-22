@@ -131,7 +131,7 @@ void simple_screen_task(){
 }
 
 void print_curvepoints(std::vector<CurvePoint> points){
-  for(int i = 0; i < (int)points.size(); i++){
+  for(int i = 0; i < points.size(); i++){
     print_point(points[i].point, i);
     // TODO: also print drive_voltage, heading_max_voltage, and follow_distance
     // TODO: add a way to edit drive_voltage, heading_max_voltage, and follow_distance for each point

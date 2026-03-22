@@ -80,28 +80,28 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
 }
 
 void Drive::follow_path(std::vector<CurvePoint> path_points){
-    last_found_index = -1;
+    last_found_index = 0;
 
     // Extend path by 12in so robot doesn't oscillate crazily towards the end of the path
     Point extend_point = extend_path(path_points[path_points.size()-2].point, path_points[path_points.size()-1].point, 12);
     path_points.push_back(CurvePoint(extend_point, path_points[path_points.size()-1].drive_voltage, path_points[path_points.size()-1].heading_max_voltage, path_points[path_points.size()-1].follow_distance, path_points[path_points.size()-1].drive_settle_error, path_points[path_points.size()-1].point_length, path_points[path_points.size()-1].slow_down_turn_radians, path_points[path_points.size()-1].slow_down_turn_amount));
 
     // Figure out where robot is on the path when starting to follow it
-    for(int i = last_found_index + 1; i < path_points.size()-2; i++){ // -1 because last_found_index starts at -1, which is out of bounds
+    for(int i = last_found_index; i < path_points.size()-2; i++){
         if(is_in_segment(Point(get_X_position(), get_Y_position()), path_points[i].point, path_points[i+1].point)){
-            last_found_index = i - 1; // -1 because loop starts with last_found_index + 1
+            last_found_index = i;
             break;
         }
     }
 
     // Follow the path
-    while(last_found_index < (int)path_points.size() - 2){ // while we're not following the last point
+    while(last_found_index < path_points.size() - 2){ // while we're not following the last point
         Point robot_pos = Point(get_X_position(), get_Y_position(), get_absolute_heading());
         CurvePoint follow_me = get_follow_point(path_points, robot_pos, path_points[last_found_index + 1].follow_distance); // last_found_index + 1 is the next point (the point we are following)
     
         go_to_point(follow_me.point.x, follow_me.point.y, follow_me.drive_voltage, follow_me.heading_max_voltage, follow_me.drive_settle_error);
         
-        if(is_past_segment(robot_pos, path_points[last_found_index].point, path_points[last_found_index + 1].point)){ // TODO: THIS WILL CRASH BECAUSE last_found_index CAN BE -1. 
+        if(is_past_segment(robot_pos, path_points[last_found_index].point, path_points[last_found_index + 1].point)){
             last_found_index++;
         }
     }
