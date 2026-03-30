@@ -10,3 +10,9 @@ bool is_in_segment(Point point, Point line_point_1, Point line_point_2);
 Point extend_path(Point line_point_1, Point line_point_2, float extension_length_in);
 
 bool is_past_segment(Point robot_pos, Point line_point_1, Point line_point_2);
+
+int sgn(float x);
+
+float findLookaheadCurvature(Point robot_pos, float heading, Point lookahead);
+
+float slew(float target, float current, float max_change, int restrict_direction);

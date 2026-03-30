@@ -82,3 +82,49 @@ bool is_past_segment(Point robot_pos, Point line_point_1, Point line_point_2){
 
     return dot_AR_AB > AB_length_squared;
 }
+
+int sgn(float x){
+    return (x > 0) - (x < 0);
+}
+
+/**
+ * @brief Get the curvature of a circle that intersects the robot and the lookahead point
+ *
+ * @param robot_pos the position of the robot
+ * @param heading the heading of the robot
+ * @param lookahead the lookahead point
+ * @return float curvature
+ */
+float findLookaheadCurvature(Point robot_pos, float heading, Point lookahead) {
+    // calculate whether the robot is on the left or right side of the circle
+    float side = sgn(sin(to_rad(heading)) * (lookahead.x - robot_pos.x) - cos(to_rad(heading)) * (lookahead.y - robot_pos.y));
+    
+    // calculate center point and radius
+    float a = -tan(to_rad(heading));
+    float c = tan(to_rad(heading)) * robot_pos.x - robot_pos.y;
+    float x = fabs(a * lookahead.x + lookahead.y + c) / sqrt((a * a) + 1);
+    float d_squared = pow(lookahead.x - robot_pos.x, 2) + pow(lookahead.y - robot_pos.y, 2);
+
+    // return curvature
+    return side * ((2 * x) / (d_squared));
+}
+
+/**
+ * @param max_change the maximum change in voltage per iteration
+ * @param restrict_direction 0 for no restriction, 1 for only allow increasing, -1 for only allow decreasing
+ */
+float slew(float target, float current, float max_change, int restrict_direction) {
+    if (max_change == 0) return target;
+
+    const float change = target - current;
+
+    // only restrict change for specified directions
+    if (restrict_direction == 1 && change < 0) return target;
+    if (restrict_direction == -1 && change > 0) return target;
+
+    if (abs(change) > abs(max_change))
+        return current + (max_change * sgn(change));
+
+    // return the target if no restriction is necessary
+    return target;
+}

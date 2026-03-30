@@ -1,11 +1,12 @@
 #include "main.h"
 
 // IMU inertial(3); // 67V
-IMU inertial(6); // 66995A
+// IMU inertial(6); // 66995A
+IMU inertial(8); // 66994T Worlds
 Rotation fwd_tracker(2); // I just put a random number here but we dont have a forward tracker
 Rotation sideways_tracker(1);  // I just put a random number here but we dont have a sideways tracker
 
-// 66994T
+// 66994T PAS & VTO
 // MotorGroup leftMotors({-10, 15, 18}); // negative port number means reversed
 // MotorGroup rightMotors({-20, 7, -8}); // negative port number means reversed
 
@@ -14,32 +15,24 @@ Rotation sideways_tracker(1);  // I just put a random number here but we dont ha
 // MotorGroup rightMotors({13, 12, 11}); // (front, mid, back) negative port number means reversed
 
 // 66995A
-MotorGroup leftMotors({-3, 5, -7}); // (order not known) negative port number means reversed
-MotorGroup rightMotors({2, 9, -15}); // (order not known) negative port number means reversed
+// MotorGroup leftMotors({-3, 5, -7}); // (order not known) negative port number means reversed
+// MotorGroup rightMotors({2, 9, -15}); // (order not known) negative port number means reversed
 
-Motor intake_up(9, MotorGears::green);
-Motor intake_mid(17, MotorGears::green);
-Motor intake_down(-6, MotorGears::green);
+// 66994T Worlds
+MotorGroup leftMotors({-13, -17, -16}); // (order not known) negative port number means reversed
+MotorGroup rightMotors({19, 15, 12}); // (order not known) negative port number means reversed
 
-adi::DigitalOut claw('B');
-adi::DigitalOut shovel('F');
-adi::DigitalOut lift('G');
-adi::DigitalOut upper('E');
-adi::DigitalOut odomlift('D');
+Motor intake(20, MotorGears::green);
+Motor outtake(7, MotorGears::green);
 
-Distance distance_sensorDown(13);
-Distance distance_sensorUp(14);
-Distance distance_sensorL(1);
-Distance distance_sensorR(2);
-Optical block_optical(21);
+adi::DigitalOut claw('F');
+adi::DigitalOut shovel('H');
+adi::DigitalOut lift('D');
+adi::DigitalOut upper('G');
+adi::DigitalOut outtake_lift('E');
 
-int intake_stats;
-int intake_jam_count;
-int intake_status_count;
-int intake_task;
-int midintake;
-int upintake;
-
+Distance distance_sensorL(11);
+Distance distance_sensorR(6);
 
 
 Drive chassis(
@@ -82,7 +75,7 @@ Drive chassis(
     // Input Forward Tracker center distance (a positive distance corresponds to a tracker on the right side of the robot, negative is left.)
     // For a zero tracker tank drive with odom, put the positive distance from the center of the robot to the right side of the drive.
     // This distance is in inches:
-    5.5,
+    5.25,
 
 
     // Input the Sideways Tracker Port, following the same steps as the Forward Tracker Port:
@@ -101,6 +94,6 @@ void init() {
     
     delay(2500); // wait for imu to calibrate
     // static Task screen_task(simple_screen_task); // This must be called in competition_initialize() or later. Calling this in initialize() doesn't work. 
-    // static Task screen_task(map_task); 
+    static Task screen_task(map_task);
     Controller(CONTROLLER_MASTER).rumble("..");
 }

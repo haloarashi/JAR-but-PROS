@@ -1,52 +1,118 @@
 #include "Template/drive.h"
 
-// TODO: Make this non-blocking. In get_follow_point(), only update last_found_index if the robot is past the point. 
-void Drive::go_to_point(float X_position, float Y_position, float drive_voltage, float heading_max_voltage, float drive_settle_error){
-    // PID drivePID(hypot(X_position-get_X_position(),Y_position-get_Y_position()), drive_kp, drive_ki, drive_kd, drive_starti, drive_settle_error, drive_settle_time, drive_timeout);
-    float start_angle_deg = to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()));
-    PID headingPID(start_angle_deg-get_absolute_heading(), heading_kp, heading_ki, heading_kd, heading_starti);
-    // bool line_settled = false;
-    // bool prev_line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
-    // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position());
+// void Drive::go_to_point(PID headingPID, float X_position, float Y_position, float drive_voltage, float heading_max_voltage, float drive_settle_error){
+//     drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
+    
+//     float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
+//     float heading_scale_factor = cos(to_rad(heading_error));
+    
+//     // heading_error = reduce_negative_90_to_90(heading_error);
+//     float heading_output = headingPID.compute(heading_error);
+    
+//     float drive_output = drive_voltage;
+    
+//     if (drive_error<drive_settle_error) {
+//         heading_output = 0;
+//     }
+//     else{
+//         drive_output *= heading_scale_factor;
+//     }
 
-    // while(drive_error > drive_settle_error){
-    // while(true){
-        // bool line_settled = is_line_settled(X_position, Y_position, start_angle_deg, get_X_position(), get_Y_position());
+//     drive_output = clamp(drive_output, -fabs(heading_scale_factor)*drive_max_voltage, fabs(heading_scale_factor)*drive_max_voltage);
+//     heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+//     // drive_output = clamp_min_voltage(drive_output, drive_min_voltage);
+//     if(fabs(drive_output) < drive_min_voltage){
+//         drive_output = 10;
+//     }
 
-        // drive_error = hypot(X_position-get_X_position(),Y_position-get_Y_position()); // keep this so other parts of the code can access drive_error correctly
-        
-        float heading_error = reduce_negative_180_to_180(to_deg(atan2(X_position-get_X_position(),Y_position-get_Y_position()))-get_absolute_heading());
-        float heading_scale_factor = cos(to_rad(heading_error));
-        
-        heading_error = reduce_negative_90_to_90(heading_error);
-        float heading_output = headingPID.compute(heading_error);
-        
-        float drive_output = drive_voltage * heading_scale_factor;
+//     // printf("drive_min_voltage: %.0f, drive_output: %.0f, heading_output: %.0f\n", drive_min_voltage, drive_output, heading_output);
 
-        // if (drive_error<drive_settle_error) { heading_output = 0; }
+//     drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
+// }
 
-        drive_output = clamp(drive_output, -fabs(heading_scale_factor)*drive_max_voltage, fabs(heading_scale_factor)*drive_max_voltage);
-        heading_output = clamp(heading_output, -heading_max_voltage, heading_max_voltage);
+// void Drive::follow(std::vector<CurvePoint> path_points, float lookahead, int timeout, bool forwards, bool async) {
+//     Point pose = this->getPose(true);
+//     Point lastPose = pose;
+//     Point lookaheadPose(0, 0, 0);
+//     Point lastLookahead = pathPoints.at(0);
+//     lastLookahead.theta = 0;
+//     float curvature;
+//     float targetVel;
+//     float prevLeftVel = 0;
+//     float prevRightVel = 0;
+//     int closestPoint;
+//     float leftInput = 0;
+//     float rightInput = 0;
+//     float prevVel = 0;
+//     int compState = pros::competition::get_status();
 
-        // drive_output = clamp_min_voltage(drive_output, heading_scale_factor*drive_min_voltage);
+//     // loop until the robot is within the end tolerance
+//     for (int i = 0; i < timeout / 10 && pros::competition::get_status() == compState && this->motionRunning; i++) {
+//         // get the current position of the robot
+//         pose = this->getPose(true);
+//         if (!forwards) pose.theta -= M_PI;
 
-        // if(line_settled){
-        //     // drive_output = 0;
-        //     break;
-        // }
-        // if(line_settled && fabs(heading_error) < turn_settle_error){
-        //     break;
-        // }
-        
-        drive_with_voltage(left_voltage_scaling(drive_output, heading_output), right_voltage_scaling(drive_output, heading_output));
-    //     delay(10);
-    // }
+//         // update completion vars
+//         lastPose = pose;
+//         lastLookahead = lookaheadPose; // update last lookahead position
+
+//         // // get the curvature of the arc between the robot and the lookahead point
+//         // float curvatureHeading = M_PI / 2 - pose.theta;
+//         // curvature = findLookaheadCurvature(pose, curvatureHeading, lookaheadPose);
+
+//         // // get the target velocity of the robot
+//         // targetVel = pathPoints.at(closestPoint).theta;
+//         // targetVel = slew(targetVel, prevVel, lateralSettings.slew);
+//         // prevVel = targetVel;
+
+//         // // calculate target left and right velocities
+//         // float targetLeftVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
+//         // float targetRightVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
+
+//         // // ratio the speeds to respect the max speed
+//         // float ratio = std::max(std::fabs(targetLeftVel), std::fabs(targetRightVel)) / 127;
+//         // if (ratio > 1) {
+//         //     targetLeftVel /= ratio;
+//         //     targetRightVel /= ratio;
+//         // }
+
+//         // update previous velocities
+//         prevLeftVel = targetLeftVel;
+//         prevRightVel = targetRightVel;
+
+//         // move DT
+
+//         pros::delay(10);
+//     }
+// }
+float prevVel = 0;
+void Drive::go_to_point(Point robot_pos, CurvePoint follow_me){
+    float curvature = findLookaheadCurvature(robot_pos, robot_pos.heading, follow_me.point);
+    
+    // get the target velocity of the robot
+    float targetVel = follow_me.drive_voltage;
+    targetVel = slew(targetVel, prevVel, 5, 0);
+    prevVel = targetVel;
+    
+    float targetLeftVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
+    float targetRightVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
+    
+    
+    if(fabs(targetLeftVel) > drive_max_voltage || fabs(targetRightVel) > drive_max_voltage){
+        float ratio = std::max(fabs(targetLeftVel), fabs(targetRightVel)) / drive_max_voltage;
+        targetLeftVel /= ratio;
+        targetRightVel /= ratio;
+    }
+    
+    printf("last_found_index: %d, curvature: %.2f, targetLeftVel: %.2f, targetRightVel: %.2f\n", last_found_index, curvature, targetLeftVel, targetRightVel);
+    
+    chassis.drive_with_voltage(targetLeftVel, targetRightVel);
 }
 
 CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point robot_pos, float follow_radius){
-    CurvePoint follow_me = CurvePoint(path_points[last_found_index + 1]);
+    CurvePoint follow_me = CurvePoint(path_points[last_found_index]);
     
-    for(int i = last_found_index + 1; i < path_points.size()-1; i++){ // -1 is because we need two points per loop. There is no second -1 (to form a -2) because the last appended extra point must be chosen as a target, just not drive to it. 
+    for(int i = last_found_index; i < path_points.size()-1; i++){ // -1 is because we need two points per loop. There is no second -1 (to form a -2) because the last appended extra point must be chosen as a target, just not drive to it. 
         CurvePoint start = path_points[i];
         CurvePoint end = path_points[i+1];
 
@@ -72,7 +138,6 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
             follow_me = CurvePoint(follow_point, end.drive_voltage, end.heading_max_voltage, end.follow_distance, end.drive_settle_error, end.point_length, end.slow_down_turn_radians, end.slow_down_turn_amount);
         }
 
-        // last_found_index = i;
         break;
     }
 
@@ -95,14 +160,18 @@ void Drive::follow_path(std::vector<CurvePoint> path_points){
     }
 
     // Follow the path
+    // PID headingPID(0, heading_kp, heading_ki, heading_kd, heading_starti);
     while(last_found_index < path_points.size() - 2){ // while we're not following the last point
         Point robot_pos = Point(get_X_position(), get_Y_position(), get_absolute_heading());
         CurvePoint follow_me = get_follow_point(path_points, robot_pos, path_points[last_found_index + 1].follow_distance); // last_found_index + 1 is the next point (the point we are following)
-    
-        go_to_point(follow_me.point.x, follow_me.point.y, follow_me.drive_voltage, follow_me.heading_max_voltage, follow_me.drive_settle_error);
+        
+        go_to_point(robot_pos, follow_me);
+        // go_to_point(headingPID, follow_me.point.x, follow_me.point.y, follow_me.drive_voltage, follow_me.heading_max_voltage, follow_me.drive_settle_error);
         
         if(is_past_segment(robot_pos, path_points[last_found_index].point, path_points[last_found_index + 1].point)){
             last_found_index++;
         }
+
+        delay(10);
     }
 }
