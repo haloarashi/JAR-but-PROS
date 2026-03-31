@@ -87,22 +87,22 @@
 // }
 float prevVel = 0;
 void Drive::go_to_point(Point robot_pos, CurvePoint follow_me){
-    float curvature = findLookaheadCurvature(robot_pos, robot_pos.heading, follow_me.point);
+    double curvature = -findLookaheadCurvature(robot_pos, robot_pos.heading, follow_me.point);
     
     // get the target velocity of the robot
     float targetVel = follow_me.drive_voltage;
-    targetVel = slew(targetVel, prevVel, 5, 0);
+    // targetVel = slew(targetVel, prevVel, 5, 0);
     prevVel = targetVel;
     
-    float targetLeftVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
-    float targetRightVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
+    double targetLeftVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
+    double targetRightVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
     
     
-    if(fabs(targetLeftVel) > drive_max_voltage || fabs(targetRightVel) > drive_max_voltage){
-        float ratio = std::max(fabs(targetLeftVel), fabs(targetRightVel)) / drive_max_voltage;
-        targetLeftVel /= ratio;
-        targetRightVel /= ratio;
-    }
+    // if(fabs(targetLeftVel) > drive_max_voltage || fabs(targetRightVel) > drive_max_voltage){
+    //     float ratio = std::max(fabs(targetLeftVel), fabs(targetRightVel)) / drive_max_voltage;
+    //     targetLeftVel /= ratio;
+    //     targetRightVel /= ratio;
+    // }
     
     printf("last_found_index: %d, curvature: %.2f, targetLeftVel: %.2f, targetRightVel: %.2f\n", last_found_index, curvature, targetLeftVel, targetRightVel);
     

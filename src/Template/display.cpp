@@ -152,16 +152,27 @@ void init_map(){
 
 void map_curvepoints(std::vector<CurvePoint> points){
   for(int i = 0; i < points.size(); i++){
-    int x = points[i].point.x / 140.41 * 120 + 120;
-    int y = 120 - points[i].point.y / 140.41 * 120;
+    // game manual version
+    // int x = points[i].point.x / 140.41 * 120 + 120;
+    // int y = 120 - points[i].point.y / 140.41 * 120;
+
+    // path.jerryio version
+    int x = points[i].point.x / 70 * 60 + 239;
+    int y = 60 - points[i].point.y / 70 * 60;
+
     screen::set_pen(pros::c::COLOR_RED);
     screen::draw_pixel(x, y);
   }
 }
 
 void update_map(){
-  int robot_x = chassis.get_X_position() / 140.41 * 120 + 120;
-  int robot_y = 120 - chassis.get_Y_position() / 140.41 * 120;
+  // game manual version
+  // int robot_x = chassis.get_X_position() / 140.41 * 120 + 120;
+  // int robot_y = 120 - chassis.get_Y_position() / 140.41 * 120;
+
+  // path.jerryio version
+  int robot_x = chassis.get_X_position() / 70 * 60 + 239;
+  int robot_y = 60 - chassis.get_Y_position() / 70 * 60;
   
   screen::set_pen(pros::c::COLOR_YELLOW_GREEN);
   screen::draw_pixel(robot_x, robot_y);
