@@ -70,7 +70,7 @@ Drive chassis(
 
     // Input the Forward Tracker diameter (reverse it to make the direction switch)
     // For a tank drive using odom without a forward tracker, this value is useless and does not affect anything:
-    2,
+    3.25,
 
     // Input Forward Tracker center distance (a positive distance corresponds to a tracker on the right side of the robot, negative is left.)
     // For a zero tracker tank drive with odom, put the positive distance from the center of the robot to the right side of the drive.

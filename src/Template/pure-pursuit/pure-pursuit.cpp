@@ -87,15 +87,15 @@
 // }
 float prevVel = 0;
 void Drive::go_to_point(Point robot_pos, CurvePoint follow_me){
-    double curvature = -findLookaheadCurvature(robot_pos, robot_pos.heading, follow_me.point);
+    double curvature = findLookaheadCurvature(robot_pos, robot_pos.heading, follow_me.point);
     
     // get the target velocity of the robot
     float targetVel = follow_me.drive_voltage;
-    // targetVel = slew(targetVel, prevVel, 5, 0);
+    // targetVel = slew(targetVel, prevVel, 15, 0);
     prevVel = targetVel;
     
-    double targetLeftVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
-    double targetRightVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
+    double targetLeftVel = follow_me.drive_voltage * (2 + curvature * ForwardTracker_center_distance) / 2;
+    double targetRightVel = follow_me.drive_voltage * (2 - curvature * ForwardTracker_center_distance) / 2;
     
     
     // if(fabs(targetLeftVel) > drive_max_voltage || fabs(targetRightVel) > drive_max_voltage){
@@ -131,12 +131,12 @@ CurvePoint Drive::get_follow_point(std::vector<CurvePoint> path_points, Point ro
             follow_point = intersections[0];
         }
 
-        if(pt_to_pt_distance(robot_pos, end.point) <= follow_radius){
-            follow_me = end; // prevents the robot from going backwards
-        }
-        else{
+        // if(pt_to_pt_distance(robot_pos, end.point) <= follow_radius){
+        //     follow_me = end; // prevents the robot from going backwards
+        // }
+        // else{
             follow_me = CurvePoint(follow_point, end.drive_voltage, end.heading_max_voltage, end.follow_distance, end.drive_settle_error, end.point_length, end.slow_down_turn_radians, end.slow_down_turn_amount);
-        }
+        // }
 
         break;
     }
